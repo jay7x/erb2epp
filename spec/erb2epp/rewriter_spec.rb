@@ -44,6 +44,10 @@ describe Erb2epp::Rewriter do
         match: 'if $x {',
       },
       {
+        code: 'unless @x',
+        match: 'unless $x {',
+      },
+      {
         code: '@x.each do |k,v|',
         match: '$x.each |$k,$v| {',
       },
