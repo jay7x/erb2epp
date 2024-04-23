@@ -60,7 +60,7 @@ module Erb2epp
     end
 
     # Add an opening brace to the end of `if` statement line
-    def rewrite_if(tokens)
+    def rewrite_if_unless(tokens)
       return tokens unless tokens.count { |x| x[1] == '{' }.zero?
 
       # We need the opening brace
@@ -115,7 +115,7 @@ module Erb2epp
     def rewrite_code(code)
       tokens = rewrite_tokens(code)
 
-      tokens = rewrite_if(tokens) if tokens_match?(tokens, /^[- ]*if/)
+      tokens = rewrite_if_unless(tokens) if tokens_match?(tokens, /^[- ]*(if|unless)/)
       tokens = rewrite_blockvars(tokens) if tokens_match?(tokens, /{[^}]*?\|[^\|]*?\|/)
 
       collect_local_vars(tokens) if tokens_match?(tokens, /[a-z][A-Za-z0-9_(), ]*=/)
