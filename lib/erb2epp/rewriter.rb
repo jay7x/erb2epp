@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require 'ripper'
-require 'set'
 
 module Erb2epp
   # Rewrite code from Ruby ERB to Puppet EPP
@@ -61,7 +60,7 @@ module Erb2epp
 
     # Add an opening brace to the end of `if` statement line
     def rewrite_if_unless(tokens)
-      return tokens unless tokens.count { |x| x[1] == '{' }.zero?
+      return tokens unless tokens.none? { |x| x[1] == '{' }
 
       # We need the opening brace
       ocb_pos = tokens.size - 1
@@ -71,7 +70,7 @@ module Erb2epp
       res = tokens[..ocb_pos]
       res << [:on_sp, ' ']
       res << [:on_kw, '{']
-      res.concat tokens[ocb_pos + 1..]
+      res.concat tokens[(ocb_pos + 1)..]
       res
     end
 
@@ -93,8 +92,8 @@ module Erb2epp
         next unless pos.values.all?(&:positive?)
 
         # When every position is positive then we found the whole "{ |...|" string, time to rewrite it
-        new_res = res[0..(pos[:lbrace]) - 1]                             # copy everything before lbrace
-        new_res << [:on_sp, ' '] if new_res.last[0] != :on_sp            # add space if none
+        new_res = res[0..(pos[:lbrace] - 1)] # copy everything before lbrace
+        new_res << [:on_sp, ' '] if new_res.last[0] != :on_sp # add space if none
         new_res.concat collect_vars_in_pipes(res[(pos[:lpipe])..(pos[:rpipe])]) # from lpipe to rpipe
         new_res << [:on_sp, ' ']     # space before lbrace
         new_res << [:on_lbrace, '{'] # lbrace
@@ -116,7 +115,7 @@ module Erb2epp
       tokens = rewrite_tokens(code)
 
       tokens = rewrite_if_unless(tokens) if tokens_match?(tokens, /^[- ]*(if|unless)/)
-      tokens = rewrite_blockvars(tokens) if tokens_match?(tokens, /{[^}]*?\|[^\|]*?\|/)
+      tokens = rewrite_blockvars(tokens) if tokens_match?(tokens, /{[^}]*?\|[^|]*?\|/)
 
       collect_local_vars(tokens) if tokens_match?(tokens, /[a-z][A-Za-z0-9_(), ]*=/)
       tokens = rewrite_local_vars(tokens)

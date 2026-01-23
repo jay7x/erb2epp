@@ -5,7 +5,7 @@ require 'temple'
 module Erb2epp
   # Parse an ERB template to Temple S-expressions respecting the whitespace control
   class Parser < Temple::Parser
-    ERB_PATTERN = /(\n|<%%|%%>)|<%(=|\#)?(.*?)?%>/m.freeze
+    ERB_PATTERN = /(\n|<%%|%%>)|<%(=|\#)?(.*?)?%>/m
 
     def call(input)
       result = [:multi]
