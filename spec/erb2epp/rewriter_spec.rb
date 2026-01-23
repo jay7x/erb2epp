@@ -85,6 +85,22 @@ describe Erb2epp::Rewriter do
         code: 'nil',
         match: 'undef',
       },
+      {
+        code: 'scope["foo"]',
+        match: '$foo',
+      },
+      {
+        code: 'scope.lookupvar("foo")',
+        match: '$foo',
+      },
+      {
+        code: 'scope.call_function("foonk", ["a1", ["b1", ("b2")]])',
+        match: 'foonk("a1", ["b1", ("b2")])',
+      },
+      {
+        code: 'scope.function_foonk(["a1", ["b1", ("b2")]])',
+        match: 'foonk("a1", ["b1", ("b2")])',
+      },
     ].each do |param|
       context "with code => '#{param[:code]}'" do
         let(:code) { param[:code] }

@@ -105,7 +105,80 @@ module Erb2epp
       res
     end
 
-    # Check if tokens as a string match a regexp
+    # Rewrite scope[]/scope.<function>
+    def rewrite_scope(tokens)
+      scope_pos = tokens.index([:on_ident, 'scope'])
+      rewritten = case tokens[scope_pos + 1]
+                  when [:on_lbracket, '['] # variable lookup
+                    rewrite_scope_var(tokens.drop(scope_pos + 1))
+                  when [:on_period, '.']
+                    case tokens[scope_pos + 2][1]
+                    when 'lookupvar'
+                      rewrite_scope_var(tokens.drop(scope_pos + 2))
+                    else
+                      rewrite_scope_function(tokens.drop(scope_pos + 2))
+                    end
+                  end
+      pre = scope_pos.positive? ? tokens[0..(scope_pos - 1)] : []
+      pre + rewritten
+    end
+
+    # Rewrite scope['foo']/scope.lookupvar('foo')
+    def rewrite_scope_var(tokens)
+      var_name_pos = tokens.index { |x| x[0] == :on_tstring_content }
+      var = "$#{tokens[var_name_pos][1]}"
+      @epp_params << var # This should be an EPP parameter
+
+      # Look for closing bracket after var_name_pos
+      end_pos = tokens.drop(var_name_pos + 1).index do |x|
+        %i[on_rparen on_rbracket].include?(x[0])
+      end
+
+      tail = tokens.drop(var_name_pos + end_pos + 2)
+      [[:on_ident, var]] + tail
+    end
+
+    # Rewrite scope.call_function/scope.function_<>
+    def rewrite_scope_function(tokens)
+      method_name = tokens[0][1]
+      if method_name == 'call_function'
+        # Rewrite call_function
+        function_name_pos = tokens.index { |x| x[0] == :on_tstring_content }
+        function_name = tokens[function_name_pos][1]
+      else
+        mg = method_name.match(/function_(.*)/)
+        return tokens unless mg
+
+        function_name_pos = 0
+        function_name = mg[1]
+      end
+
+      function_args_start = function_name_pos + 1 + tokens.drop(function_name_pos + 1).index([:on_lbracket, '['])
+      # Search for closing [:on_rbracket, ']']
+      function_args_end = 0
+      bracket_counter = 1 # first [ is skipped
+      tokens.drop(function_args_start + 1).each_with_index do |token, pos|
+        case token[0]
+        when :on_lbracket
+          bracket_counter += 1
+        when :on_rbracket
+          bracket_counter -= 1
+        end
+        unless bracket_counter.positive?
+          function_args_end = function_args_start + 1 + pos
+          break
+        end
+      end
+      function_args = tokens[(function_args_start + 1)..(function_args_end - 1)]
+
+      # Look for function call closing ')'
+      closing_rparen_pos = function_args_end + 1 + tokens.drop(function_args_end + 1).index([:on_rparen, ')'])
+      tail = tokens.drop(closing_rparen_pos + 1)
+
+      [[:on_ident, function_name], [:on_lparen, '(']] + function_args + [[:on_rparen, ')']] + tail
+    end
+
+    # Check if tokens as a string match the regexp
     def tokens_match?(tokens, pattern)
       pattern.match? tokens.map { |x| x[1] }.join
     end
@@ -116,6 +189,8 @@ module Erb2epp
 
       tokens = rewrite_if_unless(tokens) if tokens_match?(tokens, /^[- ]*(if|unless)/)
       tokens = rewrite_blockvars(tokens) if tokens_match?(tokens, /{[^}]*?\|[^|]*?\|/)
+
+      tokens = rewrite_scope(tokens) if tokens_match?(tokens, /scope[\[.]/) # scope[] or scope.<>
 
       collect_local_vars(tokens) if tokens_match?(tokens, /[a-z][A-Za-z0-9_(), ]*=/)
       tokens = rewrite_local_vars(tokens)
