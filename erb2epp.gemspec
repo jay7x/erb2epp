@@ -11,14 +11,24 @@ Gem::Specification.new do |s|
     add data types for additional validation and provide the context to the
     template.
   DESC
-  s.authors     = ['Ewoud Kohl van Wijngaarden']
-  s.email       = 'ewoud+rubygems@kohlvanwijngaarden.nl'
-  s.files       = Dir['lib/**/*.rb'] + Dir['bin/*'] + ['LICENSE']
-  s.homepage    = 'https://github.com/ekohl/erb2epp'
-  s.metadata    = { 'source_code_uri' => 'https://github.com/ekohl/erb2pp' }
-  s.executables << 'erb2epp'
+  s.authors = [
+    'Ewoud Kohl van Wijngaarden',
+    'Yury Bushmelev',
+    'Vox Pupuli',
+  ]
+  s.email       = ['voxpupuli@groups.io']
+  s.homepage    = 'https://github.com/voxpupuli/erb2epp'
+  s.metadata    = {
+    'source_code_uri' => 'https://github.com/voxpupuli/erb2epp',
+  }
 
-  s.required_ruby_version = '>= 2.7.0', '< 4'
+  s.files = Dir['lib/**/*.rb', 'bin/*'] + [
+    'LICENSE',
+    'README.md',
+  ]
+  s.executables = s.files.grep(%r{^bin/}) { |f| File.basename(f) }
 
-  s.add_runtime_dependency 'temple', '~> 0.10.0'
+  s.required_ruby_version = '>= 3.2', '< 5'
+
+  s.add_dependency 'temple', '~> 0.10.0'
 end

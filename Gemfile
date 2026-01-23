@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-source 'https://rubygems.org'
+source ENV['GEM_SOURCE'] || 'https://rubygems.org'
 
 gemspec
 
@@ -10,6 +10,6 @@ group :test do
   gem 'rspec', '~> 3.12'
 end
 
-group :rubocop do
-  gem 'voxpupuli-rubocop', '~> 1.4.0'
+group :development do
+  gem 'voxpupuli-rubocop', '~> 5.1.0'
 end
