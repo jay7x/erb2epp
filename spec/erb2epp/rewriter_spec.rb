@@ -81,6 +81,10 @@ describe Erb2epp::Rewriter do
         code: '- trim_both -',
         match: '- trim_both -',
       },
+      {
+        code: 'nil',
+        match: 'undef',
+      },
     ].each do |param|
       context "with code => '#{param[:code]}'" do
         let(:code) { param[:code] }

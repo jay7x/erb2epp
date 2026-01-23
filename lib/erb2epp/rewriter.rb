@@ -160,6 +160,8 @@ module Erb2epp
             r << [:on_lbrace, '{']
           when 'end'
             r << [:on_rbrace, '}']
+          when 'nil'
+            r << [type, 'undef']
           end
         end
         r << [type, value] if r.empty?
